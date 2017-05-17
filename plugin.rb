@@ -1,6 +1,6 @@
 # name: sketchup_3dwh_onebox
 # about: Discourse plugin for embedding SketchUp 3D Warehouse models in a onebox
-# version: 0.1
+# version: 0.2
 # authors: Andreas Eisenbarth
 
 register_asset "stylesheets/sketchup_3dwh_onebox.css"
@@ -19,9 +19,20 @@ module Onebox
       end
 
       BASE_URL = "https://3dwarehouse.sketchup.com"
-      # Matches details page (model.html?id=) and embed codes (embed.html?mid=)
-      # for old 32 digit hexadecimal id and new uuid.
-      REGEX = /^(?:https?:\/\/)3dwarehouse\.sketchup\.com\/(?:model\.html\?id=|embed\.html\?mid=)([a-fA-F0-9]{32}|[uU][a-fA-F0-9\-]{36})\S*$/
+      # Matcher for model details url and embed url.
+      REGEX = /^(?:https?:\/\/)             # http or https
+               3dwarehouse\.sketchup\.com\/ # domain
+               (?:
+                 model\.html\?id=           # old model details page
+                |embed\.html\?mid=          # old embed code
+                |model\/                    # new model details path
+               )
+               (
+                 [a-fA-F0-9]{32}            # old (Google era) model id
+                |[uU]?[a-fA-F0-9\-]{36}     # uuid prefixed with 'u' or new uuid not prefixed
+               )
+               \S*$/x                       # anything following that is not a space
+               # x ignores whitespace in multiline regexp
 
       THUMB_PRIORITY_ORDER = %w(bot_lt lt bot_st st)
 
@@ -29,8 +40,8 @@ module Onebox
       matches_regexp REGEX
 
       def placeholder_html
-        w = 400
-        h = 300
+        w = 580
+        h = 326
         id = @url.match(REGEX)[1]
         request_url = "#{BASE_URL}/3dw/GetEntity?id=#{id}"
 
@@ -57,8 +68,8 @@ HTML
       # Since 3D Warehouse does not give links to images, we use an iframe for
       # both static image and 3d view.
       def to_html
-        w = 400
-        h = 300
+        w = 580
+        h = 326
         id = @url.match(REGEX)[1]
         embed_image = "#{BASE_URL}/embed.html?mid=#{id}&width=#{w}&height=#{h}&etp=im"
         embed_3d = "#{BASE_URL}/embed.html?mid=#{id}&width=#{w}&height=#{h}"
