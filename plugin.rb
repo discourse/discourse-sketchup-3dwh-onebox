@@ -3,6 +3,8 @@
 # version: 0.2
 # authors: Andreas Eisenbarth
 
+require "onebox"
+
 register_asset "stylesheets/sketchup_3dwh_onebox.css"
 
 # Without this, there is an error when loading/precompiling:
