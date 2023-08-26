@@ -1,4 +1,4 @@
-# name: sketchup_3dwh_onebox
+# name: discourse-sketchup-3dwh-onebox
 # about: Discourse plugin for embedding SketchUp 3D Warehouse models in a onebox
 # version: 0.2
 # authors: Andreas Eisenbarth
