@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # name: discourse-sketchup-3dwh-onebox
 # about: Discourse plugin for embedding SketchUp 3D Warehouse models in a onebox
 # version: 0.2
@@ -7,11 +8,7 @@ require "onebox"
 
 register_asset "stylesheets/sketchup_3dwh_onebox.css"
 
-# Without this, there is an error when loading/precompiling:
-# NoMethodError: undefined method `matches_regexp'
-Onebox = Onebox
-
-module Onebox
+module ::Onebox
   module Engine
     class SketchUp3dwhOnebox
       include Engine
@@ -22,7 +19,8 @@ module Onebox
 
       BASE_URL = "https://3dwarehouse.sketchup.com"
       # Matcher for model details url and embed url.
-      REGEX = /^(?:https?:\/\/)             # http or https
+      REGEX =
+        /^(?:https?:\/\/)             # http or https
                3dwarehouse\.sketchup\.com\/ # domain
                (?:
                  model\.html\?id=           # old model details page
@@ -33,10 +31,10 @@ module Onebox
                  [a-fA-F0-9]{32}            # old (Google era) model id
                 |[uU]?[a-fA-F0-9\-]{36}     # uuid prefixed with 'u' or new uuid not prefixed
                )
-               \S*$/x                       # anything following that is not a space
-               # x ignores whitespace in multiline regexp
+               \S*$/x # anything following that is not a space
+      # x ignores whitespace in multiline regexp
 
-      THUMB_PRIORITY_ORDER = %w(bot_lt lt bot_st st)
+      THUMB_PRIORITY_ORDER = %w[bot_lt lt bot_st st]
 
       # Register the regular expression for testing if the onebox handles a certain link:
       matches_regexp REGEX
@@ -50,18 +48,18 @@ module Onebox
         response = fetch_response(request_url)
 
         json = MultiJson.load(response.body)
-        available_images = json['binaryNames']
+        available_images = json["binaryNames"]
         image_type = THUMB_PRIORITY_ORDER.find { |name| available_images.include? name }
         return to_html unless image_type
 
-        image_meta = json['binaries'][image_type]
+        image_meta = json["binaries"][image_type]
 
-        return <<HTML
+        <<HTML
 <div class="onebox-3dwh" id="#{id}">
-  <img src="#{image_meta['url']}" width="#{w}" height="#{h}" />
+  <img src="#{image_meta["url"]}" width="#{w}" height="#{h}" />
 </div>
 HTML
-      rescue
+      rescue StandardError
         to_html
       end
 
@@ -83,12 +81,10 @@ HTML
 
       # Copied from StandardEmbed
       def fetch_response(location, limit = 5, domain = nil)
-        raise Net::HTTPError.new('HTTP redirect too deep', location) if limit == 0
+        raise Net::HTTPError.new("HTTP redirect too deep", location) if limit == 0
 
         uri = URI(location)
-        if !uri.host
-          uri = URI("#{domain}#{location}")
-        end
+        uri = URI("#{domain}#{location}") if !uri.host
         http = Net::HTTP.new(uri.host, uri.port)
         http.open_timeout = Onebox.options.connect_timeout
         http.read_timeout = Onebox.options.timeout
@@ -99,10 +95,12 @@ HTML
         response = http.request_get(uri.request_uri)
 
         case response
-          when Net::HTTPSuccess     then response
-          when Net::HTTPRedirection then fetch_response(response['location'], limit - 1, "#{uri.scheme}://#{uri.host}")
-          else
-            response.error!
+        when Net::HTTPSuccess
+          response
+        when Net::HTTPRedirection
+          fetch_response(response["location"], limit - 1, "#{uri.scheme}://#{uri.host}")
+        else
+          response.error!
         end
       end
     end
